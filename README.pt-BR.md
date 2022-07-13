@@ -11,7 +11,7 @@ Além disso, a API do BB não gera o PDF do boleto, algo que fará parte deste p
 
 ### Registrar boleto no banco
 
-- [x] Registrar boleto banário no banco
+- [x] Registrar boleto bancário no banco
 - [ ] Listar boletos emitidos
 - [ ] Consultar boletos por id
 - [ ] Alterar boleto por id
