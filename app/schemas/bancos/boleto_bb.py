@@ -7,6 +7,7 @@ from app.schemas.bancos.beneficiario_bb import BeneficiarioBB, BeneficiarioFinal
 from app.schemas.bancos.pagador_bb import PagadorBB, PagadorFull
 from app.schemas.bancos.qr_code_bb import QrCodeBB, QrCodeFull
 from app.schemas.base import BaseSchema, DateTimeModelMixin, IDModelMixin, IDModelWithTenantMixin
+from app.util.utils import get_date_print_format, get_valor_real_print_format
 
 from app.util.utils_bb import get_date_bb_format
 
@@ -155,10 +156,29 @@ class BoletoBBFull(BoletoBB, IDModelMixin):
     beneficiario: Optional[BeneficiarioFull]
     qr_code: Optional[QrCodeFull]
 
+    @validator("data_emissao")
+    def validate_data_emissao(cls, data_emissao: str):
+        return get_date_print_format(data_emissao)
+
+    @validator("data_vencimento")
+    def validate_data_vencimento(cls, data_vencimento: str):
+        return get_date_print_format(data_vencimento)
+
+    @validator("valor_original")
+    def validate_valor_original(cls, valor_original: str):
+        return get_valor_real_print_format(valor_original)
+
+    @validator("valor_desconto")
+    def validate_valor_desconto(cls, valor_desconto: str):
+        return get_valor_real_print_format(valor_desconto)
+
     @validator("linha_digitavel")
     def validate_linha_digitavel(cls, linha_digitavel: str):
-        ld = str(linha_digitavel)
-        return f"{ld[0:5]}.{ld[5:10]} {ld[10:15]}.{ld[15:21]} {ld[21:26]}.{ld[26:32]} {ld[32:33]} {ld[33:47]}"
+        if len(linha_digitavel) == 47:
+            ld = str(linha_digitavel)
+            return f"{ld[0:5]}.{ld[5:10]} {ld[10:15]}.{ld[15:21]} {ld[21:26]}.{ld[26:32]} {ld[32:33]} {ld[33:47]}"
+
+        return linha_digitavel
 
 
 class BoletoBBForList(IDModelMixin):

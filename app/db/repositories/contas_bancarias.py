@@ -1,4 +1,3 @@
-from fastapi import HTTPException, status
 from pydantic.types import UUID4, List, Optional
 from app.schemas.bancos.conta_bancaria import (
     ContaBancariaCreate,
@@ -149,16 +148,14 @@ class ContasBancariasRepository(BaseRepository):
         )
 
     async def get_conta_bancaria_by_id(self, *, tenant_id: UUID4, id: UUID4):
-        back_account = await self.db.fetch_one(
+        conta_bancaria = await self.db.fetch_one(
             query=GET_BANK_ACCOUNT_BY_ID_QUERY, values={"tenant_id": tenant_id, "id": id}
         )
 
-        if not back_account:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No conta bancaria found with that id.",
-            )
-        return ContaBancariaInDB(**back_account)
+        if not conta_bancaria:
+            return None
+
+        return ContaBancariaInDB(**conta_bancaria)
 
     async def update_conta_bancaria_by_id(
         self, *, conta_bancaria: ContaBancariaInDB, conta_bancaria_update: ContaBancariaUpdate

@@ -2,6 +2,7 @@ import httpx
 from datetime import date
 from typing import Any, Optional
 from pydantic import condecimal, conint, constr
+from app.api.dependencies.boletos_bb import get_boleto_bb_by_id_from_path
 from app.api.dependencies.database import get_repository
 from fastapi import Body, Depends, HTTPException, status
 from app.api.dependencies.redis_database import get_redis_repository
@@ -10,6 +11,7 @@ from app.db.repositories.convenios_bancarios import ConveniosBancariosRepository
 from app.db.repositories.contas_bancarias import ContasBancariasRepository
 from app.db.repositories.token_bb_redis import TokenBBRedisRepository
 from app.schemas.bancos.boleto import BoletoCreate
+from app.schemas.bancos.boleto_bb import BoletoBBFull
 from app.schemas.enums import PersonType
 from app.schemas.filter import FilterModel
 from app.schemas.page import PageModel
@@ -67,7 +69,7 @@ async def register_new_boleto_bb(
 @router.get(
     "",
     response_model=PageModel,
-    name="contas-bancarias:get-all-contas-bancarias",
+    name="boletos-bb:get-all-boletos-bb",
 )
 async def get_all_boletos_bb(
     boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
@@ -202,3 +204,14 @@ async def get_all_boletos_bb(
     return await boletos_bb_repo.get_all_boletos_bb(
         tenant_id=tenant_origin.id, current_page=current_page, per_page=per_page, filters=filters, sorts=sorts
     )
+
+
+@router.get(
+    "/{id}",
+    response_model=BoletoBBFull,
+    name="boletos-bb:get-boleto-bb-by-id",
+)
+async def get_boleto_bb_by_id(
+    boleto_bb: BoletoBBFull = Depends(get_boleto_bb_by_id_from_path),
+) -> BoletoBBFull:
+    return boleto_bb

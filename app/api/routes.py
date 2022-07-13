@@ -7,7 +7,7 @@ from .api_v1.permissions import router as permissions_router
 from .api_v1.auth import router as auth_router
 from .api_v1.users import router as users_router
 from .api_v1.profile import router as profile_router
-from .api_v1.boleto_bb import router as boleto_bb_router
+from .api_v1.boletos_bb import router as boleto_bb_router
 from .api_v1.contas_bancarias import router as contas_bancarias_router
 from .api_v1.convenios_bancarios import router as convenios_bancarios_router
 

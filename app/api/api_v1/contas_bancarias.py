@@ -69,7 +69,7 @@ async def get_all_contas_bancarias(
 @router.get(
     "/{id}",
     response_model=ContaBancariaFull,
-    name="contas-bancaris:get-conta-bancaria-by-id",
+    name="contas-bancarias:get-conta-bancaria-by-id",
 )
 async def get_conta_bancaria_by_id(
     conta_bancaria: ContaBancariaInDB = Depends(get_conta_bancaria_by_id_from_path),
@@ -80,7 +80,7 @@ async def get_conta_bancaria_by_id(
 @router.put(
     "/{id}",
     response_model=ContaBancariaFull,
-    name="contas-bancaris:update-conta-bancaria-by-id",
+    name="contas-bancarias:update-conta-bancaria-by-id",
     dependencies=[Depends(has_permission(["bank_accounts_manager"]))],
 )
 async def uptade_conta_bancaria_by_id(
@@ -98,7 +98,7 @@ async def uptade_conta_bancaria_by_id(
 @router.delete(
     "/{id}",
     response_model=UUID4,
-    name="contas-bancaris:delete-conta-bancaria-by-id",
+    name="contas-bancarias:delete-conta-bancaria-by-id",
 )
 async def delete_conta_bancaria_by_id(
     user_token: Token = Depends(has_permission(["bank_accounts_manager"])),

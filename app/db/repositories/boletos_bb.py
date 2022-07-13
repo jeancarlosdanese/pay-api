@@ -1,6 +1,6 @@
 import datetime
 import ssl
-from typing import List, Optional
+from typing import Any, List, Optional
 import aiohttp
 from fastapi import status
 from pydantic import UUID4
@@ -91,7 +91,41 @@ GET_BOLETO_BB_BY_ID_QUERY = """
         data_vencimento, valor_original, valor_desconto, descricao_tipo_titulo, numero, codigo_cliente, \
             linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at
     FROM
-        boletos_bb;
+        boletos_bb
+    WHERE
+        tenant_id = :tenant_id
+        AND id = :id;
+"""
+
+
+GET_PAGADOR_BB_BY_BOLETO_BB_ID_QUERY = """
+    SELECT id, tenant_id, boleto_bb_id, tipo_inscricao, numero_inscricao, nome, \
+        endereco, cep, cidade, bairro, uf, telefone, created_at, updated_at
+    FROM
+        pagadores_bb
+    WHERE
+        tenant_id = :tenant_id
+        AND boleto_bb_id = :boleto_bb_id;
+"""
+
+
+GET_BENEFICIARIO_BB_BY_BOLETO_BB_ID_QUERY = """
+    SELECT id, tenant_id, boleto_bb_id, agencia, conta_corrente, tipo_endereco, logradouro, \
+        bairro, cidade, codigo_cidade, uf, cep, indicador_comprovacao, created_at, updated_at
+    FROM
+        beneficiarios_bb
+    WHERE
+        tenant_id = :tenant_id
+        AND boleto_bb_id = :boleto_bb_id;
+"""
+
+GET_QR_CODE_BB_BY_BOLETO_BB_ID_QUERY = """
+    SELECT id, tenant_id, boleto_bb_id, url, tx_id, emv, created_at, updated_at
+    FROM
+        qr_codes_bb
+    WHERE
+        tenant_id = :tenant_id
+        AND boleto_bb_id = :boleto_bb_id;
 """
 
 
@@ -352,3 +386,35 @@ class BoletosBBRepository(BaseRepository):
         )
 
         return select_query
+
+    async def get_boleto_bb_by_id(self, *, tenant_id: UUID4, id: UUID4) -> Any:
+        boleto_bb = await self.db.fetch_one(query=GET_BOLETO_BB_BY_ID_QUERY, values={"tenant_id": tenant_id, "id": id})
+        boleto_bb_in_db = BoletoBBInDB(**boleto_bb)
+
+        pagador_bb = await self.db.fetch_one(
+            query=GET_PAGADOR_BB_BY_BOLETO_BB_ID_QUERY,
+            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+        )
+        pagador_bb_in_db = PagadorInDB(**pagador_bb)
+
+        beneficiario_bb = await self.db.fetch_one(
+            query=GET_BENEFICIARIO_BB_BY_BOLETO_BB_ID_QUERY,
+            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+        )
+        beneficiario_bb_in_db = BeneficiarioInDB(**beneficiario_bb)
+
+        qr_code_bb = await self.db.fetch_one(
+            query=GET_QR_CODE_BB_BY_BOLETO_BB_ID_QUERY,
+            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+        )
+        qr_code_bb_in_db = QrCodeInDB(**qr_code_bb)
+
+        if not boleto_bb_in_db:
+            return None
+
+        return {
+            **boleto_bb_in_db.dict(),
+            "pagador": pagador_bb_in_db.dict(),
+            "beneficiario": beneficiario_bb_in_db.dict(),
+            "qr_code": qr_code_bb_in_db.dict(),
+        }
