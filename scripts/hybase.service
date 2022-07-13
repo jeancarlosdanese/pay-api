@@ -1,0 +1,38 @@
+# copy this file in /etc/systemd/system/
+# chmod 755 /etc/systemd/system/payapi.service
+# systemctl daemon-reload
+
+# # Start your service
+# systemctl start payapi.service
+
+# Obtain your services' status
+# systemctl status payapi.service
+
+# Stop your service
+# systemctl stop payapi.service
+
+# Restart your service
+# systemctl restart payapi.service
+
+[Unit]
+Description = pay-api daemon
+#Requires=payapi.socket
+After = network.target
+
+[Service]
+Type=notify
+PermissionsStartOnly = true
+#PIDFile = /run/payapi/pay-api.pid
+User = payapi
+Group = payapi
+RuntimeDirectory=/home/payapi/.pyenv/shims/gunicorn
+WorkingDirectory = /dados/payapi/pay-api
+ExecStart = /home/payapi/.pyenv/shims/gunicorn -w 5 --forwarded-allow-ips="10.7.1.1" -k uvicorn.workers.UvicornWorker app.main:app -b 0.0.0.0:8000 --access-logfile /var/log/payapi/pay-api-access.log --error-logfile /var/log/payapi/pay-api-error.log
+ExecReload = /bin/kill -s HUP $MAINPID
+ExecStop = /bin/kill -s TERM $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp = true
+
+[Install]
+WantedBy = multi-user.target
