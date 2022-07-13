@@ -1,7 +1,10 @@
 import datetime
 import ssl
+from typing import List, Optional
 import aiohttp
 from fastapi import status
+from pydantic import UUID4
+from pypika import Table, Tables, Query, Parameter
 from app.core.config import BB_API_URL
 from app.core.exceptions.exceptions_customs import HttpExceptionBB
 from app.db.repositories.token_bb_redis import TokenBBRedisRepository
@@ -13,6 +16,7 @@ from app.schemas.bancos.beneficiario_bb import (
 from app.schemas.bancos.boleto import BoletoCreate
 from app.schemas.bancos.boleto_bb import (
     BoletoBBCreate,
+    BoletoBBForList,
     BoletoBBFull,
     BoletoBBInDB,
     BoletoBBWithTenantCreate,
@@ -28,6 +32,7 @@ from app.schemas.bancos.conta_bancaria import ContaBancariaInDB
 from app.schemas.bancos.convenio_bancario import ConvenioBancarioInDB
 from app.schemas.bancos.pagador_bb import Pagador, PagadorBB, PagadorInDB, PagadorWithTenantCreate
 from app.schemas.bancos.qr_code_bb import QrCodeInDB, QrCodeWithTenantCreate
+from app.schemas.filter import FilterModel
 from app.schemas.tenant import TenantInDB
 
 from app.services import auth_service
@@ -269,3 +274,81 @@ class BoletosBBRepository(BaseRepository):
                     )
 
                     return boleto_bb_full
+
+    async def get_all_boletos_bb(
+        self,
+        *,
+        tenant_id: UUID4,
+        current_page: int = 1,
+        per_page: int = 10,
+        filters: List[FilterModel],
+        sorts: Optional[str] = None,
+    ) -> BoletoBBInDB:
+        select_query = await self.__get_boletos_bb_select_query()
+        count_query = await self.__get_boletos_bb_count_query()
+
+        boletos_bb = Table("boletos_bb")
+
+        return await self.get_page_by_params(
+            table=boletos_bb,
+            select_query=select_query,
+            count_query=count_query,
+            tenant_id=tenant_id,
+            filters=filters,
+            sorts=sorts,
+            current_page=current_page,
+            per_page=per_page,
+            type_schema=BoletoBBForList,
+        )
+
+    async def __get_boletos_bb_count_query(self) -> Query:
+        boletos_bb, pagadores_bb = Tables(
+            "boletos_bb",
+            "pagadores_bb",
+        )
+
+        count_query = (
+            Query.from_(boletos_bb)
+            .inner_join(pagadores_bb)
+            .on(pagadores_bb.boleto_bb_id == boletos_bb.id)
+            .where(boletos_bb.tenant_id == Parameter(":tenant_id"))
+        )
+
+        return count_query
+
+    async def __get_boletos_bb_select_query(self) -> Query:
+        boletos_bb, pagadores_bb = Tables(
+            "boletos_bb",
+            "pagadores_bb",
+        )
+
+        select_query = (
+            Query.from_(boletos_bb)
+            .inner_join(pagadores_bb)
+            .on(pagadores_bb.boleto_bb_id == boletos_bb.id)
+            .select(
+                boletos_bb.id,
+                boletos_bb.tenant_id,
+                boletos_bb.convenio_bancario_id,
+                boletos_bb.numero_titulo_beneficiario,
+                boletos_bb.data_emissao,
+                boletos_bb.data_vencimento,
+                boletos_bb.valor_original,
+                boletos_bb.valor_desconto,
+                boletos_bb.descricao_tipo_titulo,
+                boletos_bb.numero,
+                boletos_bb.codigo_cliente,
+                boletos_bb.linha_digitavel,
+                boletos_bb.codigo_barra_numerico,
+                boletos_bb.numero_contrato_cobranca,
+                boletos_bb.created_at,
+                boletos_bb.updated_at,
+                pagadores_bb.tipo_inscricao.as_("tipo_pessoa"),
+                pagadores_bb.numero_inscricao.as_("cpf_cnpj"),
+                pagadores_bb.nome.as_("nome"),
+                pagadores_bb.telefone.as_("telefone"),
+            )
+            .where(boletos_bb.tenant_id == Parameter(":tenant_id"))
+        )
+
+        return select_query

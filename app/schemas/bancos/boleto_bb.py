@@ -162,15 +162,18 @@ class BoletoBBFull(BoletoBB, IDModelMixin):
 
 
 class BoletoBBForList(IDModelMixin):
-    numero_titulo_beneficiario: conint()
-    data_emissao: date
-    data_vencimento: date
-    valor_original: condecimal(gt=0, decimal_places=2)
+    tipo_pessoa: Optional[str]
+    cpf_cnpj: Optional[str]
+    nome: Optional[str]
+    telefone: Optional[str]
+    numero_titulo_beneficiario: Optional[conint()]
+    data_emissao: Optional[date]
+    data_vencimento: Optional[date]
+    valor_original: Optional[condecimal(gt=0, decimal_places=2)]
     valor_desconto: Optional[condecimal()] = 0
-    descricao_tipo_titulo: constr(min_length=2, max_length=2)
-    numero: constr(min_length=20, max_length=20)
-    codigo_cliente: conint()
-    linha_digitavel: constr(min_length=47, max_length=47)
-    codigo_barra_numerico: constr(min_length=44, max_length=44)
-    numero_contrato_cobranca: conint()
-    pagador: PagadorBB
+    descricao_tipo_titulo: Optional[constr(min_length=2, max_length=2)]
+    numero: Optional[constr(min_length=20, max_length=20)]
+    codigo_cliente: Optional[conint()]
+    linha_digitavel: Optional[constr(min_length=47, max_length=47)]
+    codigo_barra_numerico: Optional[constr(min_length=44, max_length=44)]
+    numero_contrato_cobranca: Optional[conint()]
