@@ -51,7 +51,7 @@ class ContaBancariaInDBWithoutTenant(DateTimeModelMixin, ContaBancariaBase, IDMo
         orm_mode = True
 
 
-class ContaBancariaFull(DateTimeModelMixin, ContaBancariaBase, IDModelMixin):
+class ContaBancariaFull(ContaBancariaBase, IDModelMixin):
     class Config:
         orm_mode = True
 

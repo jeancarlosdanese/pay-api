@@ -51,15 +51,15 @@ class PagadorBB(BaseSchema):
 
     @validator("numeroInscricao", pre=True)
     def numero_inscricao_is_valid(cls, cpf_cnpj: str) -> int:
-        return int(re.sub("\D", "", cpf_cnpj))  # noqa flake8(W605)
+        return int(re.sub(r"\D", "", cpf_cnpj))
 
     @validator("cep", pre=True)
     def cep_valid(cls, cep: str) -> int:
-        return int(re.sub("\D", "", cep))  # noqa flake8(W605)
+        return int(re.sub(r"\D", "", cep))
 
     @validator("telefone", pre=True)
     def telefone_valid(cls, telefone: str) -> int:
-        return int(re.sub("\D", "", telefone))  # noqa flake8(W605)
+        return int(re.sub(r"\D", "", telefone))
 
     # class Config:
     #     alias_generator = underscore_to_camel

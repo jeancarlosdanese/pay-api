@@ -12,6 +12,7 @@ class BoletoCreate(BaseModel):
     data_vencimento: date
     valor_original: condecimal()
     valor_desconto: Optional[condecimal()] = 0
+    mensagem_beneficiario: Optional[constr(max_length=30)]
     pagador: Pagador
 
     @validator("descricao_tipo_titulo")

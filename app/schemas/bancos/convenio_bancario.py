@@ -1,5 +1,6 @@
 from typing import Optional
-from pydantic import UUID4, conint, constr
+from pydantic import UUID4, condecimal, conint, constr
+from app.schemas.bancos.conta_bancaria import ContaBancariaFull
 
 from app.schemas.base import BaseSchema, DateTimeModelMixin, IDModelMixin, IDModelWithTenantMixin
 
@@ -11,6 +12,8 @@ class ConvenioBancarioBase(BaseSchema):
     numero_variacao_carteira: conint(ge=10, le=99)
     descricao_tipo_titulo: constr(min_length=2, max_length=2)
     numero_dias_limite_recebimento: conint()
+    percentual_multa: Optional[condecimal(max_digits=2)]
+    percentual_juros: Optional[condecimal(max_digits=2)]
     is_active: Optional[bool]
 
 
@@ -25,6 +28,8 @@ class ConvenioBancarioUpdate(ConvenioBancarioBase):
     numero_carteira: Optional[conint(ge=10, le=99)] = None
     numero_variacao_carteira: Optional[conint(ge=10, le=99)] = None
     descricao_tipo_titulo: Optional[constr(min_length=2, max_length=2)] = None
+    percentual_multa: Optional[condecimal(max_digits=2)] = None
+    percentual_juros: Optional[condecimal(max_digits=2)] = None
     is_active: Optional[bool] = None
 
 
@@ -42,7 +47,9 @@ class ConvenioBancarioInDBWithoutTenant(DateTimeModelMixin, ConvenioBancarioBase
         orm_mode = True
 
 
-class ConvenioBancarioFull(DateTimeModelMixin, ConvenioBancarioBase, IDModelMixin):
+class ConvenioBancarioFull(ConvenioBancarioBase, IDModelMixin):
+    conta_bancaria: Optional[ContaBancariaFull]
+
     class Config:
         orm_mode = True
 

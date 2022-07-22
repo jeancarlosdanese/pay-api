@@ -4,10 +4,12 @@ from pydantic import UUID4, BaseModel, condecimal, constr, validator
 from pydantic.types import conint
 from datetime import date
 from app.schemas.bancos.beneficiario_bb import BeneficiarioBB, BeneficiarioFinalBB, BeneficiarioFull
+from app.schemas.bancos.convenio_bancario import ConvenioBancarioFull
 from app.schemas.bancos.pagador_bb import PagadorBB, PagadorFull
 from app.schemas.bancos.qr_code_bb import QrCodeBB, QrCodeFull
 from app.schemas.base import BaseSchema, DateTimeModelMixin, IDModelMixin, IDModelWithTenantMixin
-from app.util.utils import get_date_print_format, get_valor_real_print_format
+
+# from app.util.utils import get_date_print_format, get_valor_real_print_format
 
 from app.util.utils_bb import get_date_bb_format
 
@@ -75,7 +77,7 @@ class BoletoBBCreate(BaseModel):
     numeroTituloBeneficiario: constr(min_length=1, max_length=15, strip_whitespace=True)
     campoUtilizacaoBeneficiario: Optional[constr(max_length=30, strip_whitespace=True)]
     numeroTituloCliente: constr(min_length=20, max_length=20)
-    mensagemBloquetoocorrencia: Optional[constr(max_length=165)]
+    mensagemBloquetoOcorrencia: Optional[constr(max_length=165)]
     desconto: Optional[DescontoBB] = None
     segundoDesconto: Optional[DescontoBB] = None
     terceiroDesconto: Optional[DescontoBB] = None
@@ -127,6 +129,7 @@ class BoletoBB(BaseSchema):
     valor_desconto: Optional[condecimal()] = 0
     descricao_tipo_titulo: constr(min_length=2, max_length=2)
     numero: constr(min_length=20, max_length=20)
+    mensagem_beneficiario: Optional[constr(min_length=3, max_length=30)]  # noqa
     codigo_cliente: Optional[conint()]
     linha_digitavel: Optional[constr(min_length=47, max_length=47)]
     codigo_barra_numerico: Optional[constr(min_length=44, max_length=44)]
@@ -152,33 +155,10 @@ class BoletoBBInDB(DateTimeModelMixin, BoletoBB, IDModelWithTenantMixin):
 
 
 class BoletoBBFull(BoletoBB, IDModelMixin):
+    convenio: Optional[ConvenioBancarioFull]
     pagador: Optional[PagadorFull]
     beneficiario: Optional[BeneficiarioFull]
     qr_code: Optional[QrCodeFull]
-
-    @validator("data_emissao")
-    def validate_data_emissao(cls, data_emissao: str):
-        return get_date_print_format(data_emissao)
-
-    @validator("data_vencimento")
-    def validate_data_vencimento(cls, data_vencimento: str):
-        return get_date_print_format(data_vencimento)
-
-    @validator("valor_original")
-    def validate_valor_original(cls, valor_original: str):
-        return get_valor_real_print_format(valor_original)
-
-    @validator("valor_desconto")
-    def validate_valor_desconto(cls, valor_desconto: str):
-        return get_valor_real_print_format(valor_desconto)
-
-    @validator("linha_digitavel")
-    def validate_linha_digitavel(cls, linha_digitavel: str):
-        if len(linha_digitavel) == 47:
-            ld = str(linha_digitavel)
-            return f"{ld[0:5]}.{ld[5:10]} {ld[10:15]}.{ld[15:21]} {ld[21:26]}.{ld[26:32]} {ld[32:33]} {ld[33:47]}"
-
-        return linha_digitavel
 
 
 class BoletoBBForList(IDModelMixin):

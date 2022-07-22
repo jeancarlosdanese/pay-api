@@ -39,6 +39,7 @@ def create_boletos_bb_table() -> None:
         sa.Column("data_vencimento", sa.Date, nullable=False),
         sa.Column("valor_original", sa.DECIMAL(), nullable=False),
         sa.Column("valor_desconto", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("mensagem_beneficiario", sa.String(30), nullable=False),
         sa.Column("descricao_tipo_titulo", sa.String(2), nullable=False),
         sa.Column("numero", sa.String(20), nullable=False),
         sa.Column("codigo_cliente", sa.Integer, nullable=True),

@@ -24,27 +24,15 @@ CREATE_BANK_ACCOUNT_QUERY = """
         :client_id, :client_secret, :developer_application_key, :is_active)
     RETURNING
         id, tenant_id, nome, banco_id, "tipo", agencia, agencia_dv, numero_conta, numero_conta_dv, \
-            client_id, client_secret, developer_application_key, is_active, created_at, updated_at;
+            client_id, client_secret, developer_application_key, is_active, \
+                created_at, updated_at;
 """
 
 
 GET_BANK_ACCOUNT_BY_ID_QUERY = """
-    SELECT
-        id,
-        nome,
-        tenant_id,
-        banco_id,
-        tipo,
-        agencia,
-        agencia_dv,
-        numero_conta,
-        numero_conta_dv,
-        client_id,
-        client_secret,
-        developer_application_key,
-        is_active,
-        created_at,
-        updated_at
+    SELECT id, nome, tenant_id, banco_id, tipo, agencia, agencia_dv, numero_conta, numero_conta_dv, \
+        client_id, client_secret, developer_application_key, is_active, \
+            created_at, updated_at
     FROM
         contas_bancarias
     WHERE

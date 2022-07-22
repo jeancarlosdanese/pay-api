@@ -50,7 +50,12 @@ class BeneficiarioWithTenantCreate(BeneficiarioBB):
         alias_generator = camel_to_underscore
 
 
-class BeneficiarioFull(Beneficiario, IDModelMixin):
+class BeneficiarioIdentificacao(BaseSchema):
+    nome: Optional[str]
+    cpf_cnpj: Optional[str]
+
+
+class BeneficiarioFull(Beneficiario, BeneficiarioIdentificacao, IDModelMixin):
     pass
 
 

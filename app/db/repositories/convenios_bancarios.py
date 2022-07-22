@@ -20,12 +20,14 @@ from pypika import Query, Table, Tables, Parameter
 
 CREATE_CONVENIO_BANCARIO_QUERY = """
     INSERT INTO convenios_bancarios (tenant_id, conta_bancaria_id, numero_convenio, numero_carteira, \
-        numero_variacao_carteira, numero_dias_limite_recebimento, descricao_tipo_titulo, is_active)
+        numero_variacao_carteira, numero_dias_limite_recebimento, descricao_tipo_titulo, percentual_multa, \
+            percentual_juros, is_active)
     VALUES(:tenant_id, :conta_bancaria_id, :numero_convenio, :numero_carteira, :numero_variacao_carteira, \
-        :numero_dias_limite_recebimento, :descricao_tipo_titulo, :is_active)
+        :numero_dias_limite_recebimento, :descricao_tipo_titulo, :percentual_multa, :percentual_juros, :is_active)
     RETURNING
         id, tenant_id, conta_bancaria_id, numero_convenio, numero_carteira, numero_variacao_carteira, \
-            numero_dias_limite_recebimento, descricao_tipo_titulo, is_active, created_at, updated_at;
+            numero_dias_limite_recebimento, descricao_tipo_titulo, percentual_multa, percentual_juros, \
+                is_active, created_at, updated_at;
 """
 
 
@@ -39,6 +41,8 @@ GET_CONVENIO_BANCARIO_BY_ID_QUERY = """
         numero_variacao_carteira,
         numero_dias_limite_recebimento,
         descricao_tipo_titulo,
+        percentual_multa,
+        percentual_juros,
         is_active,
         created_at,
         updated_at
@@ -59,13 +63,16 @@ UPDATE_CONVENIO_BANCARIO_BY_ID_QUERY = """
         numero_variacao_carteira = :numero_variacao_carteira,
         numero_dias_limite_recebimento = :numero_dias_limite_recebimento, 
         descricao_tipo_titulo = :descricao_tipo_titulo,
+        percentual_multa = :percentual_multa,
+        percentual_juros = :percentual_juros,
         is_active = :is_active
     WHERE
         tenant_id = :tenant_id
         AND id = :id
     RETURNING
         id, tenant_id, conta_bancaria_id, numero_convenio, numero_carteira, numero_variacao_carteira, \
-            numero_dias_limite_recebimento, descricao_tipo_titulo, is_active, created_at, updated_at;
+            numero_dias_limite_recebimento, descricao_tipo_titulo, percentual_multa, percentual_juros, \
+                is_active, created_at, updated_at;
 """
 
 
@@ -190,6 +197,8 @@ class ConveniosBancariosRepository(BaseRepository):
                 convenios_bancarios.numero_variacao_carteira,
                 convenios_bancarios.descricao_tipo_titulo,
                 convenios_bancarios.numero_dias_limite_recebimento,
+                convenios_bancarios.percentual_multa,
+                convenios_bancarios.percentual_juros,
                 convenios_bancarios.is_active,
                 convenios_bancarios.created_at,
                 convenios_bancarios.updated_at,

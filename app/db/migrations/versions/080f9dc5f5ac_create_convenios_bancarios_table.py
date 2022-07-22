@@ -37,6 +37,8 @@ def create_convenios_bancarios_table() -> None:
         sa.Column("numero_variacao_carteira", sa.Integer, nullable=False),
         sa.Column("numero_dias_limite_recebimento", sa.Integer, nullable=False),
         sa.Column("descricao_tipo_titulo", sa.String(2), nullable=False),
+        sa.Column("percentual_multa", sa.DECIMAL(), nullable=False, server_default="2.0"),
+        sa.Column("percentual_juros", sa.DECIMAL(), nullable=False, server_default="1.0"),
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="True"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="RESTRICT", onupdate="RESTRICT"),
         sa.ForeignKeyConstraint(

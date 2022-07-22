@@ -133,6 +133,8 @@ dmypy.json
 
 static/*.*
 !static/README.txt
+downloads/*.*
+!downloads/README.txt
 uploads/*.*
 uploads/profiles/*
 !uploads/profiles/README.txt
@@ -142,4 +144,16 @@ uploads/spcfiles/*
 !uploads/spcfiles/README.txt
 .vscode/settings.json
 
+# arquivos utilizados em testes
 insomnia_pay_api.json
+app/services/boleto_pdf_instrucoes.py
+app/services/palms_hotel_pdf.py
+static/logos/banco_do_brasil.png
+static/logos/logo_64fc618d-2ae9-4ec3-b933-0b30f6e0f3d5.png
+static/logos/logoParadise.png
+static/logos/paradiseHotel.jpg
+static/fonts/JetBrainsMono-ExtraBold.ttf
+static/fonts/JetBrainsMono-ExtraBoldItalic.ttf
+static/fonts/JetBrainsMono-Italic.ttf
+static/fonts/JetBrainsMono-Regular.ttf
+static/fonts/Lateef-Regular.ttf

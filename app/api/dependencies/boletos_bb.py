@@ -13,7 +13,7 @@ async def get_boleto_bb_by_id_from_path(
     tenant_origin: TenantInDB = Depends(get_tenant_by_api_key),
     boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
 ) -> BoletoBBInDB:
-    boleto_bb = await boletos_bb_repo.get_boleto_bb_by_id(tenant_id=tenant_origin.id, id=id)
+    boleto_bb = await boletos_bb_repo.get_boleto_bb_by_id(tenant=tenant_origin, id=id)
     if not boleto_bb:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

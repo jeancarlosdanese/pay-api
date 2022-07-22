@@ -73,25 +73,48 @@ CREATE_QR_CODE_BB_QUERY = """
 
 CREATE_BOLETO_BB_QUERY = """
     INSERT INTO boletos_bb (tenant_id, convenio_bancario_id, numero_titulo_beneficiario, data_emissao, \
-        data_vencimento, valor_original, valor_desconto, descricao_tipo_titulo, numero, codigo_cliente, \
-            linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca
+        data_vencimento, valor_original, valor_desconto, descricao_tipo_titulo, numero, mensagem_beneficiario, \
+            codigo_cliente, linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca
         )
     VALUES(:tenant_id, :convenio_bancario_id, :numero_titulo_beneficiario, :data_emissao, \
-        :data_vencimento, :valor_original, :valor_desconto, :descricao_tipo_titulo, :numero, :codigo_cliente, \
-        :linha_digitavel, :codigo_barra_numerico, :numero_contrato_cobranca)
+        :data_vencimento, :valor_original, :valor_desconto, :descricao_tipo_titulo, :numero, :mensagem_beneficiario, \
+            :codigo_cliente, :linha_digitavel, :codigo_barra_numerico, :numero_contrato_cobranca)
     RETURNING
         id, tenant_id, convenio_bancario_id, numero_titulo_beneficiario, data_emissao, data_vencimento, \
-        valor_original, valor_desconto, descricao_tipo_titulo, numero, codigo_cliente, linha_digitavel, \
-            codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at;
+        valor_original, valor_desconto, descricao_tipo_titulo, numero, mensagem_beneficiario, codigo_cliente, \
+            linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at;
 """
 
 
 GET_BOLETO_BB_BY_ID_QUERY = """
     SELECT id, tenant_id, convenio_bancario_id, numero_titulo_beneficiario, data_emissao, \
-        data_vencimento, valor_original, valor_desconto, descricao_tipo_titulo, numero, codigo_cliente, \
-            linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at
+        data_vencimento, valor_original, valor_desconto, descricao_tipo_titulo, numero, mensagem_beneficiario, \
+            codigo_cliente, linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at
     FROM
         boletos_bb
+    WHERE
+        tenant_id = :tenant_id
+        AND id = :id;
+"""
+
+
+GET_CONVENIO_BANCARIO_BB_BY_ID_QUERY = """
+    SELECT id, tenant_id, conta_bancaria_id, numero_convenio, numero_carteira, numero_variacao_carteira, \
+        numero_dias_limite_recebimento, descricao_tipo_titulo, percentual_multa, percentual_juros, \
+            is_active, created_at, updated_at
+    FROM
+        convenios_bancarios
+    WHERE
+        tenant_id = :tenant_id
+        AND id = :id;
+"""
+
+
+GET_CONTA_BANCARIA_BB_BY_ID_QUERY = """
+    SELECT id, nome, tenant_id, banco_id, tipo, agencia, agencia_dv, numero_conta, numero_conta_dv, \
+        client_id, client_secret, developer_application_key, is_active, created_at, updated_at
+    FROM
+        contas_bancarias
     WHERE
         tenant_id = :tenant_id
         AND id = :id;
@@ -140,6 +163,7 @@ UPDATE_BOLETO_BB_BY_ID_QUERY = """
         valor_desconto = :valor_desconto,
         descricao_tipo_titulo = :descricao_tipo_titulo,
         numero = :numero,
+        mensagem_beneficiario = :mensagem_beneficiario,
         codigo_cliente = :codigo_cliente,
         linha_digitavel = :linha_digitavel,
         codigo_barra_numerico = :codigo_barra_numerico,
@@ -149,8 +173,8 @@ UPDATE_BOLETO_BB_BY_ID_QUERY = """
         AND id = :id
     RETURNING
         id, tenant_id, convenio_bancario_id, numero_titulo_beneficiario, data_emissao, data_vencimento, \
-        valor_original, valor_desconto, descricao_tipo_titulo, numero, codigo_cliente, linha_digitavel, \
-            codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at;
+        valor_original, valor_desconto, descricao_tipo_titulo, numero, mensagem_beneficiario, codigo_cliente, \
+            linha_digitavel, codigo_barra_numerico, numero_contrato_cobranca, created_at, updated_at;
 """
 
 
@@ -203,6 +227,7 @@ class BoletosBBRepository(BaseRepository):
                 dataEmissao=boleto_in_bd.data_emissao,
                 dataVencimento=boleto_in_bd.data_vencimento,
                 valorOriginal=boleto_in_bd.valor_original,
+                campoUtilizacaoBeneficiario=boleto_in_bd.mensagem_beneficiario,
                 desconto=DescontoBB(
                     tipo=1, dataExpiracao=boleto_in_bd.data_vencimento, valor=boleto_in_bd.valor_desconto
                 )
@@ -387,25 +412,37 @@ class BoletosBBRepository(BaseRepository):
 
         return select_query
 
-    async def get_boleto_bb_by_id(self, *, tenant_id: UUID4, id: UUID4) -> Any:
-        boleto_bb = await self.db.fetch_one(query=GET_BOLETO_BB_BY_ID_QUERY, values={"tenant_id": tenant_id, "id": id})
+    async def get_boleto_bb_by_id(self, *, tenant: TenantInDB, id: UUID4) -> Any:
+        boleto_bb = await self.db.fetch_one(query=GET_BOLETO_BB_BY_ID_QUERY, values={"tenant_id": tenant.id, "id": id})
         boleto_bb_in_db = BoletoBBInDB(**boleto_bb)
+
+        convenio_bancario_bb = await self.db.fetch_one(
+            query=GET_CONVENIO_BANCARIO_BB_BY_ID_QUERY,
+            values={"tenant_id": tenant.id, "id": boleto_bb_in_db.convenio_bancario_id},
+        )
+        convenio_bancario_bb_in_db = ConvenioBancarioInDB(**convenio_bancario_bb)
+
+        conta_bancaria_bb = await self.db.fetch_one(
+            query=GET_CONTA_BANCARIA_BB_BY_ID_QUERY,
+            values={"tenant_id": tenant.id, "id": convenio_bancario_bb_in_db.conta_bancaria_id},
+        )
+        conta_bancaria_bb_in_db = ContaBancariaInDB(**conta_bancaria_bb)
 
         pagador_bb = await self.db.fetch_one(
             query=GET_PAGADOR_BB_BY_BOLETO_BB_ID_QUERY,
-            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+            values={"tenant_id": tenant.id, "boleto_bb_id": boleto_bb_in_db.id},
         )
         pagador_bb_in_db = PagadorInDB(**pagador_bb)
 
         beneficiario_bb = await self.db.fetch_one(
             query=GET_BENEFICIARIO_BB_BY_BOLETO_BB_ID_QUERY,
-            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+            values={"tenant_id": tenant.id, "boleto_bb_id": boleto_bb_in_db.id},
         )
         beneficiario_bb_in_db = BeneficiarioInDB(**beneficiario_bb)
 
         qr_code_bb = await self.db.fetch_one(
             query=GET_QR_CODE_BB_BY_BOLETO_BB_ID_QUERY,
-            values={"tenant_id": tenant_id, "boleto_bb_id": boleto_bb_in_db.id},
+            values={"tenant_id": tenant.id, "boleto_bb_id": boleto_bb_in_db.id},
         )
         qr_code_bb_in_db = QrCodeInDB(**qr_code_bb)
 
@@ -414,7 +451,17 @@ class BoletosBBRepository(BaseRepository):
 
         return {
             **boleto_bb_in_db.dict(),
+            "convenio": {
+                **convenio_bancario_bb_in_db.dict(),
+                "conta_bancaria": conta_bancaria_bb_in_db.dict(
+                    exclude={"client_id", "client_secret", "developer_application_key", "is_active"}
+                ),
+            },
             "pagador": pagador_bb_in_db.dict(),
-            "beneficiario": beneficiario_bb_in_db.dict(),
+            "beneficiario": {
+                **beneficiario_bb_in_db.dict(),
+                "nome": tenant.name,
+                "cpf_cnpj": tenant.cpf_cnpj,
+            },
             "qr_code": qr_code_bb_in_db.dict(),
         }
