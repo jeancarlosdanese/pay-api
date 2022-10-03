@@ -11,7 +11,8 @@ from validate_docbr import CPF, CNPJ
 def validate_cpf_cnpj(cpf_cnpj: str) -> str:
     if cpf_cnpj is None:
         return cpf_cnpj
-    cpf_cnpj = re.sub("[-/.]", "", cpf_cnpj)
+    # cpf_cnpj = re.sub("[-/.]", "", cpf_cnpj)
+    cpf_cnpj = re.sub(r"\D", "", cpf_cnpj)
     assert all(char in string.digits for char in cpf_cnpj), "Invalid characters in cpf_cnpj."
     assert len(cpf_cnpj) == 11 or len(cpf_cnpj) == 14, "Number invalid of characters in cpf_cnpj."
     if len(cpf_cnpj) == 11:

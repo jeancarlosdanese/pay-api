@@ -7,9 +7,12 @@ from app.util.utils import camel_to_underscore, underscore_to_camel
 
 
 class Beneficiario(BaseSchema):
-    agencia: Optional[conint()]
-    conta_corrente: Optional[conint()]
-    tipo_endereco: Optional[conint()]
+    # agencia: Optional[conint()]
+    agencia: Optional[constr()]
+    # conta_corrente: Optional[conint()]
+    conta_corrente: Optional[constr()]
+    # tipo_endereco: Optional[conint()]
+    tipo_endereco: Optional[constr()]
     logradouro: Optional[constr(curtail_length=30)]
     bairro: Optional[constr(curtail_length=30)]
     cidade: Optional[constr(curtail_length=30)]

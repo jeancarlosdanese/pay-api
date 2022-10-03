@@ -1,7 +1,7 @@
 """create_qr_codes_bb_table
 
-Revision ID: 9f9c53000651
-Revises: 90b50578e4e8
+Revision ID: 90b50578e4e8
+Revises: 7b673a382e5b
 Create Date: 2022-07-07 14:12:55.442689
 
 """
@@ -14,8 +14,8 @@ from app.db.migrations.base import timestamps
 
 
 # revision identifiers, used by Alembic.
-revision = "9f9c53000651"
-down_revision = "90b50578e4e8"
+revision = "90b50578e4e8"
+down_revision = "7b673a382e5b"
 branch_labels = None
 depends_on = None
 table = "qr_codes_bb"

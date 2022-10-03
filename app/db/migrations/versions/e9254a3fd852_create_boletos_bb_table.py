@@ -1,7 +1,7 @@
 """create_boletos_bb_table
 
-Revision ID: e9254a3fd852
-Revises: 080f9dc5f5ac
+Revision ID: 7b673a382e5b
+Revises: e9254a3fd852
 Create Date: 2022-07-06 12:06:53.921608
 
 """
@@ -14,8 +14,8 @@ from app.db.migrations.base import timestamps
 
 
 # revision identifiers, used by Alembic.
-revision = "e9254a3fd852"
-down_revision = "080f9dc5f5ac"
+revision = "7b673a382e5b"
+down_revision = "e9254a3fd852"
 branch_labels = None
 depends_on = None
 table = "boletos_bb"
@@ -35,10 +35,19 @@ def create_boletos_bb_table() -> None:
         sa.Column("tenant_id", UUID(as_uuid=True), nullable=False),
         sa.Column("convenio_bancario_id", UUID(as_uuid=True), nullable=False),
         sa.Column("numero_titulo_beneficiario", sa.Integer, nullable=False),
+        sa.Column("pagador_bb_id", UUID(as_uuid=True), nullable=False),
         sa.Column("data_emissao", sa.Date, nullable=False),
         sa.Column("data_vencimento", sa.Date, nullable=False),
+        sa.Column("data_recebimento", sa.Date, nullable=True),
+        sa.Column("data_credito", sa.Date, nullable=True),
+        sa.Column("data_baixa_automatico", sa.Date, nullable=False),
         sa.Column("valor_original", sa.DECIMAL(), nullable=False),
         sa.Column("valor_desconto", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("valor_pago_sacado", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("valor_credito_cedente", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("valor_desconto_utilizado", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("valor_multa_recebido", sa.DECIMAL(), nullable=False, server_default="0.0"),
+        sa.Column("valor_juros_recebido", sa.DECIMAL(), nullable=False, server_default="0.0"),
         sa.Column("mensagem_beneficiario", sa.String(30), nullable=False),
         sa.Column("descricao_tipo_titulo", sa.String(2), nullable=False),
         sa.Column("numero", sa.String(20), nullable=False),
@@ -50,6 +59,7 @@ def create_boletos_bb_table() -> None:
         sa.ForeignKeyConstraint(
             ["convenio_bancario_id"], ["convenios_bancarios.id"], ondelete="RESTRICT", onupdate="RESTRICT"
         ),
+        sa.ForeignKeyConstraint(["pagador_bb_id"], ["pagadores_bb.id"], ondelete="RESTRICT", onupdate="RESTRICT"),
         *timestamps(),
     )
     op.create_index(

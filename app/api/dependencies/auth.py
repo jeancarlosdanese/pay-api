@@ -43,6 +43,12 @@ async def get_tenant_by_api_key(
     request: Request,
     tenants_repo: TenantsRepository = Depends(get_repository(TenantsRepository)),
 ) -> Optional[TenantInDB]:
+    # api_key = None
+    # for key, value in request.headers.items():
+    #     print(f"{key}: {value}")
+    #     if key.lower() == "x-api-key":
+    #         api_key = request.headers.get("X-API-Key")
+    #         break
     api_key = request.headers.get("X-API-Key")
     if api_key:
         tenant = await tenants_repo.get_tenant_by_api_key(api_key=api_key)

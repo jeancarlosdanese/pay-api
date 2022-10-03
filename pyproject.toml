@@ -7,10 +7,10 @@ authors = ["Jean Carlos Danese <jean@danese.com.br>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.78.0"
-uvicorn = {extras = ["standard"], version = "^0.17.6"}
-pydantic = "^1.9.1"
-fastapi-mail = "^1.0.9"
+fastapi = "^0.81.0"
+uvicorn = {extras = ["standard"], version = "^0.18.3"}
+pydantic = "^1.9.2"
+fastapi-mail = "1.1.4"
 user-agents = "^2.2.0"
 email-validator = "^1.2.1"
 python-multipart = "^0.0.5"

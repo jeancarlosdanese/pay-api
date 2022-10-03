@@ -8,10 +8,11 @@ from app.schemas.bancos.convenio_bancario import ConvenioBancarioFull
 from app.schemas.bancos.pagador_bb import PagadorBB, PagadorFull
 from app.schemas.bancos.qr_code_bb import QrCodeBB, QrCodeFull
 from app.schemas.base import BaseSchema, DateTimeModelMixin, IDModelMixin, IDModelWithTenantMixin
+from app.util.utils import camel_to_underscore
 
 # from app.util.utils import get_date_print_format, get_valor_real_print_format
 
-from app.util.utils_bb import get_date_bb_format
+from app.util.utils_bb import get_date_bb, get_date_bb_format
 
 
 class DescontoBB(BaseModel):
@@ -125,6 +126,7 @@ class BoletoBB(BaseSchema):
     numero_titulo_beneficiario: conint()
     data_emissao: date
     data_vencimento: date
+    data_baixa_automatico: date
     valor_original: condecimal(gt=0, decimal_places=2)
     valor_desconto: Optional[condecimal()] = 0
     descricao_tipo_titulo: constr(min_length=2, max_length=2)
@@ -142,19 +144,31 @@ class BoletoBB(BaseSchema):
 
 class BoletoBBWithTenantCreate(BoletoBB):
     tenant_id: UUID4
+    pagador_bb_id: UUID4
 
 
 class BoletoBBUpdate(BaseSchema):
     data_vencimento: Optional[date] = None
+    data_recebimento: Optional[date] = None
+    data_credito: Optional[date] = None
     valor_original: Optional[condecimal(gt=0, decimal_places=2)] = None
     valor_desconto: Optional[condecimal()] = None
+    valor_pago_sacado: Optional[condecimal()] = None
+    valor_credito_cedente: Optional[condecimal()] = None
+    valor_desconto_utilizado: Optional[condecimal()] = None
+    valor_multa_recebido: Optional[condecimal()] = None
+    valor_juros_recebido: Optional[condecimal()] = None
 
 
-class BoletoBBInDB(DateTimeModelMixin, BoletoBB, IDModelWithTenantMixin):
+class BoletoBBAllViewFields(BoletoBBUpdate):
+    pagador_bb_id: UUID4
+
+
+class BoletoBBInDB(DateTimeModelMixin, BoletoBBAllViewFields, BoletoBB, IDModelWithTenantMixin):
     pass
 
 
-class BoletoBBFull(BoletoBB, IDModelMixin):
+class BoletoBBFull(BoletoBBUpdate, BoletoBB, IDModelMixin):
     convenio: Optional[ConvenioBancarioFull]
     pagador: Optional[PagadorFull]
     beneficiario: Optional[BeneficiarioFull]
@@ -177,3 +191,153 @@ class BoletoBBForList(IDModelMixin):
     linha_digitavel: Optional[constr(min_length=47, max_length=47)]
     codigo_barra_numerico: Optional[constr(min_length=44, max_length=44)]
     numero_contrato_cobranca: Optional[conint()]
+
+
+class BoletoBBRequestDetails(BaseSchema):
+    id: UUID4
+    numero: str
+    numero_convenio: int
+    client_id: str
+    client_id: str
+    client_secret: str
+    developer_application_key: str
+
+
+class BoletoBBResponseDetails(BaseSchema):
+    codigoLinhaDigitavel: constr()
+    textoEmailPagador: constr()
+    textoMensagemBloquetoTitulo: constr()
+    codigoTipoMulta: conint()
+    codigoCanalPagamento: conint()
+    numeroContratoCobranca: conint()
+    codigoTipoInscricaoSacado: conint()
+    numeroInscricaoSacadoCobranca: conint()
+    codigoEstadoTituloCobranca: conint()
+    codigoTipoTituloCobranca: conint()
+    codigoModalidadeTitulo: conint()
+    codigoAceiteTituloCobranca: constr()
+    codigoPrefixoDependenciaCobrador: conint()
+    codigoIndicadorEconomico: conint()
+    numeroTituloCedenteCobranca: constr()
+    codigoTipoJuroMora: conint()
+    dataEmissaoTituloCobranca: constr()
+    dataRegistroTituloCobranca: constr()
+    dataVencimentoTituloCobranca: constr()
+    valorOriginalTituloCobranca: condecimal()
+    valorAtualTituloCobranca: condecimal()
+    valorPagamentoParcialTitulo: condecimal()
+    valorAbatimentoTituloCobranca: condecimal()
+    percentualImpostoSobreOprFinanceirasTituloCobranca: condecimal()
+    valorImpostoSobreOprFinanceirasTituloCobranca: condecimal()
+    valorMoedaTituloCobranca: condecimal()
+    percentualJuroMoraTitulo: condecimal()
+    valorJuroMoraTitulo: condecimal()
+    percentualMultaTitulo: condecimal()
+    valorMultaTituloCobranca: condecimal()
+    quantidadeParcelaTituloCobranca: conint()
+    dataBaixaAutomaticoTitulo: constr()
+    textoCampoUtilizacaoCedente: constr()
+    indicadorCobrancaPartilhadoTitulo: constr()
+    nomeSacadoCobranca: constr()
+    textoEnderecoSacadoCobranca: constr()
+    nomeBairroSacadoCobranca: constr()
+    nomeMunicipioSacadoCobranca: constr()
+    siglaUnidadeFederacaoSacadoCobranca: constr()
+    numeroCepSacadoCobranca: conint()
+    valorMoedaAbatimentoTitulo: condecimal()
+    dataProtestoTituloCobranca: constr()
+    codigoTipoInscricaoSacador: conint()
+    numeroInscricaoSacadorAvalista: conint()
+    nomeSacadorAvalistaTitulo: constr()
+    percentualDescontoTitulo: condecimal()
+    dataDescontoTitulo: constr()
+    valorDescontoTitulo: condecimal()
+    codigoDescontoTitulo: conint()
+    percentualSegundoDescontoTitulo: condecimal()
+    dataSegundoDescontoTitulo: constr()
+    valorSegundoDescontoTitulo: condecimal()
+    codigoSegundoDescontoTitulo: conint()
+    percentualTerceiroDescontoTitulo: condecimal()
+    dataTerceiroDescontoTitulo: constr()
+    valorTerceiroDescontoTitulo: condecimal()
+    codigoTerceiroDescontoTitulo: conint()
+    dataMultaTitulo: constr()
+    numeroCarteiraCobranca: conint()
+    numeroVariacaoCarteiraCobranca: conint()
+    quantidadeDiaProtesto: conint()
+    quantidadeDiaPrazoLimiteRecebimento: conint()
+    dataLimiteRecebimentoTitulo: constr()
+    indicadorPermissaoRecebimentoParcial: constr()
+    textoCodigoBarrasTituloCobranca: constr()
+    codigoOcorrenciaCartorio: conint()
+    valorImpostoSobreOprFinanceirasRecebidoTitulo: condecimal()
+    valorAbatimentoTotal: condecimal()
+    valorJuroMoraRecebido: condecimal()
+    valorDescontoUtilizado: condecimal()
+    valorPagoSacado: condecimal()
+    valorCreditoCedente: condecimal()
+    codigoTipoLiquidacao: conint()
+    dataCreditoLiquidacao: constr()
+    dataRecebimentoTitulo: constr()
+    codigoPrefixoDependenciaRecebedor: conint()
+    codigoNaturezaRecebimento: conint()
+    numeroIdentidadeSacadoTituloCobranca: constr()
+    codigoResponsavelAtualizacao: constr()
+    codigoTipoBaixaTitulo: conint()
+    valorMultaRecebido: condecimal()
+    valorReajuste: condecimal()
+    valorOutroRecebido: condecimal()
+    codigoIndicadorEconomicoUtilizadoInadimplencia: condecimal()
+
+    @validator("dataEmissaoTituloCobranca")
+    def validate_dataEmissaoTituloCobranca(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataRegistroTituloCobranca")
+    def validate_dataRegistroTituloCobranca(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataVencimentoTituloCobranca")
+    def validate_dataVencimentoTituloCobranca(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataBaixaAutomaticoTitulo")
+    def validate_dataBaixaAutomaticoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataProtestoTituloCobranca")
+    def validate_dataProtestoTituloCobranca(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataDescontoTitulo")
+    def validate_dataDescontoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataSegundoDescontoTitulo")
+    def validate_dataSegundoDescontoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataTerceiroDescontoTitulo")
+    def validate_dataTerceiroDescontoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataMultaTitulo")
+    def validate_dataMultaTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataLimiteRecebimentoTitulo")
+    def validate_dataLimiteRecebimentoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataCreditoLiquidacao")
+    def validate_dataCreditoLiquidacao(cls, data_str: str):
+        return get_date_bb(data_str)
+
+    @validator("dataRecebimentoTitulo")
+    def validate_dataRecebimentoTitulo(cls, data_str: str):
+        return get_date_bb(data_str)
+
+
+class BoletoBBResponseDetailsTest(BoletoBBResponseDetails):
+    class Config:
+        alias_generator = camel_to_underscore

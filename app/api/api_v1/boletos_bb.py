@@ -12,7 +12,7 @@ from app.db.repositories.convenios_bancarios import ConveniosBancariosRepository
 from app.db.repositories.contas_bancarias import ContasBancariasRepository
 from app.db.repositories.token_bb_redis import TokenBBRedisRepository
 from app.schemas.bancos.boleto import BoletoCreate
-from app.schemas.bancos.boleto_bb import BoletoBBFull
+from app.schemas.bancos.boleto_bb import BoletoBBFull, BoletoBBResponseDetails
 from app.schemas.bancos.boleto_pdf import BeneficiarioBoleto, DadosBoletoBB, PagadorBoleto
 from app.schemas.enums import PersonType
 from app.schemas.filter import FilterModel
@@ -59,9 +59,9 @@ async def register_new_boleto_bb(
         )
 
     bobelo_bb_in_db = await boletos_bb_repo.register_new_boleto_bb(
-        tenant=tenant_origin,
-        convenio_bancario=convenio_bancario,
-        conta_bancaria=conta_bancaria,
+        tenant_in_db=tenant_origin,
+        convenio_bancario_in_db=convenio_bancario,
+        conta_bancaria_in_db=conta_bancaria,
         new_boleto=new_boleto,
         token_bb_redis_repo=token_bb_redis_repo,
     )
@@ -220,6 +220,23 @@ async def get_boleto_bb_by_id(
     return boleto_bb
 
 
+@router.get(
+    "/{id}/consulta",
+    response_model=BoletoBBResponseDetails,
+    name="boletos-bb:get-boleto-bb-by-id-consulta",
+)
+async def get_boleto_bb_by_id_consulta(
+    boleto_bb: BoletoBBFull = Depends(get_boleto_bb_by_id_from_path),
+    token_bb_redis_repo: TokenBBRedisRepository = Depends(get_redis_repository(TokenBBRedisRepository)),
+    boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
+) -> BoletoBBResponseDetails:
+    boleto_bb_full = BoletoBBFull(**boleto_bb)
+    boleto_bb_response = await boletos_bb_repo.consultar_situacao_boleto_bb(
+        id=boleto_bb_full.id, token_bb_redis_repo=token_bb_redis_repo
+    )
+    return boleto_bb_response
+
+
 @router.get("/{id}/boleto-bb-pdf")
 async def download_pdf_order(
     background_tasks: BackgroundTasks,
@@ -240,6 +257,7 @@ async def download_pdf_order(
         linha_digitavel=boleto_bb.linha_digitavel,
         codigo_barras=boleto_bb.codigo_barra_numerico,
         qr_code=boleto_bb.qr_code.emv,
+        especie_documento=boleto_bb.descricao_tipo_titulo,
         numero_dias_limite_recebimento=boleto_bb.convenio.numero_dias_limite_recebimento,
         taxa_juros_mes=boleto_bb.convenio.percentual_juros,
         taxa_multa=boleto_bb.convenio.percentual_multa,
@@ -257,7 +275,7 @@ async def download_pdf_order(
         ),
         pagador=PagadorBoleto(
             nome=boleto_bb.pagador.nome,
-            cpf_cnpj=boleto_bb.pagador.numero_inscricao,
+            cpf_cnpj=boleto_bb.pagador.cpf_cnpj,
             cep=boleto_bb.pagador.cep,
             logradouro=boleto_bb.pagador.endereco,
             bairro=boleto_bb.pagador.bairro,

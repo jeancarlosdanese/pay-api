@@ -13,7 +13,7 @@ from pydantic.error_wrappers import ValidationError
 # from pydantic import ValidationError
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_422_UNPROCESSABLE_ENTITY
+from starlette import status
 
 from app.core.exceptions.exceptions_customs import HttpExceptionBB
 
@@ -39,9 +39,9 @@ async def http422_error_handler(
         errors = exc.errors()
         for error in errors:
             msgs.append({"message": f"{error['type']}: {error['loc'][1]} is {error['msg']}"})
-        return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_ENTITY, content={"messages": msgs})
+        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"messages": msgs})
     except Exception:
-        return JSONResponse(status_code=HTTP_422_UNPROCESSABLE_ENTITY, content={"detail": exc.errors()})
+        return JSONResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, content={"detail": exc.errors()})
 
 
 async def httpException_error_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -58,7 +58,7 @@ async def httpException_error_handler(request: Request, exc: HTTPException) -> J
 
 
 async def httpException_bb_error_handler(request: Request, exc: HttpExceptionBB) -> JSONResponse:
-    # print(f"HttpExceptionBB: {exc.content}")
+    print(f"HttpExceptionBB: {exc.content}")
     return JSONResponse(
         status_code=exc.status_code,
         content=exc.content,
@@ -68,7 +68,7 @@ async def httpException_bb_error_handler(request: Request, exc: HttpExceptionBB)
 async def validation_error_exception_handler(request: Request, err: ValidationError):
     # print(f"ValidationError: {err}")
     return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={
             "error": err,
         },
@@ -78,7 +78,7 @@ async def validation_error_exception_handler(request: Request, err: ValidationEr
 async def asyncpg_unique_validation_exception_handler(request: Request, err: UniqueViolationError):
     # print(f"UniqueViolationError: {err}")
     return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={
             "status": "error",
             "message": err.message,
@@ -90,7 +90,7 @@ async def asyncpg_unique_validation_exception_handler(request: Request, err: Uni
 async def asyncpg_foreignkey_validation_exception_handler(request: Request, err: ForeignKeyViolationError):
     # print(f"ForeignKeyViolationError: {err}")
     return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={
             "status": "error",
             "message": err.message,
@@ -102,7 +102,7 @@ async def asyncpg_foreignkey_validation_exception_handler(request: Request, err:
 async def asyncpg_invalid_text_representation_error(request: Request, err: InvalidTextRepresentationError):
     # print(f"InvalidTextRepresentationError: {err}")
     return JSONResponse(
-        status_code=HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={
             "status": "error",
             "message": err.message,

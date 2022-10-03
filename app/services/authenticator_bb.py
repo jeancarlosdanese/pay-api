@@ -43,5 +43,5 @@ class AuthServiceBB:
                 if response.status == status.HTTP_201_CREATED:
                     result = await response.json()
                     token = TokenBB(id=gw_dev_app_key, **result)
-                    await token_bb_redis_repo.set_token(token=token, expires_in=token.expires_in - 10)
+                    await token_bb_redis_repo.set_token(token=token, expires_in=token.expires_in - 60)
                     return token

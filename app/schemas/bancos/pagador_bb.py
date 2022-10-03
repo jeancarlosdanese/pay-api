@@ -12,7 +12,7 @@ from app.util.validators import (
 
 class Pagador(BaseSchema):
     tipo_inscricao: PersonType  # Domínio: 1 - Pessoa física; 2 - Pessoa Jurídica.
-    numero_inscricao: constr()  # noqa flake8(E501) - Define o número de inscrição do pagador; se pessoa física, CPF; se pessoa jurídica, CNPJ. Numérico, deve ser preenchido sem ponto, hífen, barra, e sem zeros à esquerda
+    cpf_cnpj: constr()  # noqa flake8(E501) - Define o número de inscrição do pagador; se pessoa física, CPF; se pessoa jurídica, CNPJ. Numérico, deve ser preenchido sem ponto, hífen, barra, e sem zeros à esquerda
     nome: constr(curtail_length=30)  # Identifica o nome do pagador. Pode ter até 30 caracteres
     endereco: constr(curtail_length=30)  # Identifica o endereço do pagador. Pode ter até 30 caracteres
     cep: constr(min_length=8, max_length=9)
@@ -23,7 +23,7 @@ class Pagador(BaseSchema):
     )  # Identifica o estado (UF) do pagador. Deve ter 2 caracteres e ser um estado válido.
     telefone: constr(curtail_length=30)  # Define o número de telefone do pagador. Pode ter até 30 caracteres.
 
-    @validator("numero_inscricao", pre=True)
+    @validator("cpf_cnpj", pre=True)
     def cpf_cnpj_is_valid(cls, cpf_cnpj: str) -> str:
         return validate_cpf_cnpj(cpf_cnpj)
 
@@ -67,7 +67,6 @@ class PagadorBB(BaseSchema):
 
 class PagadorWithTenantCreate(Pagador):
     tenant_id: Optional[UUID4]
-    boleto_bb_id: Optional[UUID4]
 
 
 class PagadorFull(Pagador, IDModelMixin):
