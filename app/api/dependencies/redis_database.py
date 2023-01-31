@@ -3,7 +3,7 @@ from fastapi import Depends
 from starlette.requests import Request
 from app.db.repositories.base_redis import BaseRedisRepository
 
-from aioredis import Redis
+from redis.asyncio import Redis
 
 
 def get_redis_database(request: Request) -> Redis:

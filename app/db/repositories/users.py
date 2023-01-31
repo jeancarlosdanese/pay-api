@@ -467,7 +467,7 @@ class UsersRepository(BaseRepository):
             return None
         return user_roles
 
-    async def get_users_by_slug_role(self, *, tenant_id: UUID4, slug: str) -> List[UserSummary]:
+    async def get_users_by_slug_role(self, *, tenant_id: UUID4, slug: str) -> Optional[List[UserSummary]]:
         users_in_db = await self.db.fetch_all(
             query=GET_USERS_BY_SLUG_ROLE_QUERY, values={"tenant_id": tenant_id, "slug": slug}
         )

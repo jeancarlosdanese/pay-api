@@ -1,6 +1,6 @@
 from typing import List
 from app.db.repositories.base_redis import BaseRedisRepository
-from aioredis import Redis
+from redis.asyncio import Redis
 from app.schemas.token import Token
 from app.core.config import REDIS_PREFIX
 

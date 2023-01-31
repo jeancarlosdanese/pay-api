@@ -1,5 +1,5 @@
 from app.db.repositories.base_redis import BaseRedisRepository
-from aioredis import Redis
+from redis.asyncio import Redis
 from app.core.config import ACCESS_TOKEN_EXPIRE_MINUTES_AUTH, REDIS_PREFIX
 from app.schemas.tenant import TenantInDB, TenantRedis
 

@@ -1,5 +1,5 @@
 import logging
-import aioredis
+import redis.asyncio as asyncio
 from fastapi import FastAPI
 from app.core.config import REDIS_HOST, REDIS_DB, REDIS_PORT
 
@@ -9,7 +9,7 @@ logger = logging.getLogger("__name__")
 async def connect_to_redis_db(app: FastAPI) -> None:
 
     try:
-        redis = await aioredis.from_url(
+        redis = await asyncio.from_url(
             f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
             encoding="utf-8",
             decode_responses=True,

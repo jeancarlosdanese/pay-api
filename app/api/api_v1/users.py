@@ -257,7 +257,7 @@ async def delete_permissions_of_user_by_id_and_permission_id(
 
 @router.get(
     "/get-users-by-role/{slug}",
-    response_model=List[UserSummary],
+    response_model=Optional[List[UserSummary]],
     name="users:get-users-by-role",
 )
 async def get_roles_by_slug(
