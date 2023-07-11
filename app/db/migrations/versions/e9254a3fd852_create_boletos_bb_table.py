@@ -22,7 +22,6 @@ table = "boletos_bb"
 
 
 def create_boletos_bb_table() -> None:
-
     op.create_table(
         table,
         sa.Column(
@@ -41,6 +40,7 @@ def create_boletos_bb_table() -> None:
         sa.Column("data_recebimento", sa.Date, nullable=True),
         sa.Column("data_credito", sa.Date, nullable=True),
         sa.Column("data_baixa_automatico", sa.Date, nullable=False),
+        sa.Column("data_hora_baixa", sa.TIMESTAMP(timezone=True), nullable=True),
         sa.Column("valor_original", sa.DECIMAL(), nullable=False),
         sa.Column("valor_desconto", sa.DECIMAL(), nullable=False, server_default="0.0"),
         sa.Column("valor_pago_sacado", sa.DECIMAL(), nullable=False, server_default="0.0"),

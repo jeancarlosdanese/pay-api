@@ -1,12 +1,14 @@
 import logging
+import json
 from databases import Database
-from typing import List
+from typing import Dict, List, Optional
 from fastapi import HTTPException, status
-from pydantic import UUID4
+from pydantic import UUID4, BaseModel
+from app.core.config import DEV_MODE
 from app.schemas.page import Page, PageModel
 from app.schemas.sort import SortModel
 from app.schemas.filter import FilterModel
-from pypika import Query, Table, Field, Parameter, Order, functions as fn
+from pypika import PostgreSQLQuery as Query, Table, Field, Parameter, Order, functions as fn
 
 logger = logging.getLogger("app")
 
@@ -125,3 +127,96 @@ class BaseRepository:
 
         page = Page.init(total=total, per_page=per_page, current_page=current_page)
         return PageModel(rows=rows, page=page)
+
+    def get_insert_query(self, *, table_name: str, obj: BaseModel) -> Query:
+        obj: Dict = obj.dict()
+        fields = obj.keys()
+        parameters = []
+
+        for field in fields:
+            parameters.append(Parameter(f":{field}"))
+
+        insert_query = Query.into(table_name).columns(tuple(fields)).insert(tuple(parameters)).returning("*")
+
+        if DEV_MODE:
+            self.logger.warn(insert_query)
+
+        return insert_query
+
+    def get_base_select_count_query(self, *, table_name: str) -> Query:
+        table = Table(table_name)
+        return Query.from_(table).select(fn.Count(table.id).as_("total"))
+
+    def get_base_select_query(self, *, table_name: str, type_schema: BaseModel) -> Query:
+        json_schema = json.loads(type_schema.schema_json())
+        properties = json_schema["properties"]
+
+        select_query = Query.from_(Table(table_name))
+        for key in properties.keys():
+            select_query = select_query.select(f"{key}")
+
+        return select_query
+
+    def get_select_query_by_id(self, *, table_name: str) -> Query:
+        select_query = Query.from_(Table(table_name)).select("*").where(Field("id").eq(Parameter(f":{'id'}")))
+
+        if DEV_MODE:
+            self.logger.warn(select_query)
+
+        return select_query
+
+    def get_select_query_by_empresa_id_and_id(self, *, table_name: str) -> Query:
+        select_query = (
+            Query.from_(Table(table_name))
+            .select("*")
+            .where(Field("empresa_id").eq(Parameter(f":{'empresa_id'}")))
+            .where(Field("id").eq(Parameter(f":{'id'}")))
+        )
+
+        if DEV_MODE:
+            self.logger.warn(select_query)
+
+        return select_query
+
+    def get_update_query_by_id(self, *, table_name: str, obj: BaseModel) -> Query:
+        table = Table(table_name)
+        obj: Dict = obj.dict()
+        keys = obj.keys()
+
+        update_query = Query.update(table)
+        for key in keys:
+            if key not in ["id", "created_at", "updated_at"]:
+                update_query = update_query.set(Field(key), Parameter(f":{key}"))
+
+        update_query = update_query.where(Field("id").eq(Parameter(f":{'id'}")))
+        update_query = update_query.returning("*")
+
+        if DEV_MODE:
+            self.logger.warn(update_query)
+
+        return update_query
+
+    def get_delete_query_by_id(self, *, table_name: str) -> Query:
+        table = Table(table_name)
+
+        delete_query = Query.from_(table).delete().where(Field("id").eq(Parameter(f":{'id'}"))).returning("id")
+
+        if DEV_MODE:
+            self.logger.warn(delete_query)
+
+        return delete_query
+
+    def get_delete_query_by_fields_without_return(
+        self, *, table_name: str, fields_by_filter: Optional[List] = None
+    ) -> Query:
+        table = Table(table_name)
+
+        delete_query = Query.from_(table).delete()
+
+        for field in fields_by_filter:
+            delete_query = delete_query.where(Field(field).eq(Parameter(f":{field}")))
+
+        if DEV_MODE:
+            self.logger.warn(delete_query)
+
+        return delete_query

@@ -21,3 +21,18 @@ async def get_boleto_bb_by_id_from_path(
         )
 
     return boleto_bb
+
+
+async def get_boleto_bb_by_seu_numero_from_path(
+    seu_numero: int = Path(..., title="O Número do titulo Seu número."),
+    tenant_origin: TenantInDB = Depends(get_tenant_by_api_key),
+    boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
+) -> BoletoBBInDB:
+    boleto_bb = await boletos_bb_repo.get_boleto_bb_by_seu_numero(tenant=tenant_origin, seu_numero=seu_numero)
+    if not boleto_bb:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No boleto bb found with that id.",
+        )
+
+    return boleto_bb

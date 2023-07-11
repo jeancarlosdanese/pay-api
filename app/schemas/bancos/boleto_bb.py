@@ -8,7 +8,7 @@ from app.schemas.bancos.convenio_bancario import ConvenioBancarioFull
 from app.schemas.bancos.pagador_bb import PagadorBB, PagadorFull
 from app.schemas.bancos.qr_code_bb import QrCodeBB, QrCodeFull
 from app.schemas.base import BaseSchema, DateTimeModelMixin, IDModelMixin, IDModelWithTenantMixin
-from app.util.utils import camel_to_underscore
+from app.util.utils import to_snake_case
 
 # from app.util.utils import get_date_print_format, get_valor_real_print_format
 
@@ -18,8 +18,8 @@ from app.util.utils_bb import get_date_bb, get_date_bb_format
 class DescontoBB(BaseModel):
     tipo: int = 0
     dataExpiracao: Optional[date]  # data de expiração do desconto (somente se tipo > 0), no formato “dd.mm.aaaa”
-    porcentagem: Optional[condecimal(max_digits=2)] = 0  # Define a porcentagem do desconto (somente se tipo = 2)
-    valor: Optional[condecimal(max_digits=2)] = 0  # Define o valor do desconto (somente se tipo = 1)
+    porcentagem: Optional[condecimal(decimal_places=2)] = 0  # Define a porcentagem do desconto (somente se tipo = 2)
+    valor: Optional[condecimal(decimal_places=2)] = 0  # Define o valor do desconto (somente se tipo = 1)
 
     @validator("dataExpiracao")
     def date_equal_or_greater_than(cls, data_expiracao):
@@ -158,6 +158,32 @@ class BoletoBBUpdate(BaseSchema):
     valor_desconto_utilizado: Optional[condecimal()] = None
     valor_multa_recebido: Optional[condecimal()] = None
     valor_juros_recebido: Optional[condecimal()] = None
+
+
+class BoletoBBNewVencimento(BaseSchema):
+    data_vencimento: date
+
+    @property
+    def data_vencimento_format(self) -> str:
+        return get_date_bb_format(self.data_vencimento)
+
+    def dict(self):
+        base_dict = super().dict()
+        base_dict["data_vencimento_format"] = self.data_vencimento_format
+        return base_dict
+
+    # @property
+    # def data_vencimento_format(self) -> str:
+    #     # return self.data_vencimento.strftime("%d/%m/%Y")
+    #     return get_date_bb_format(self.data_vencimento)
+
+    # def dict(self, **kwargs):
+    #     return super().dict(**kwargs, by_alias=True, exclude_none=True) | {
+    #         "data_vencimento_format": self.data_vencimento_format,
+    #     }
+
+    # @validator("data_vencimento")
+    # def data_equal_or_greater_than(cls, data):
 
 
 class BoletoBBAllViewFields(BoletoBBUpdate):
@@ -338,6 +364,119 @@ class BoletoBBResponseDetails(BaseSchema):
         return get_date_bb(data_str)
 
 
-class BoletoBBResponseDetailsTest(BoletoBBResponseDetails):
+class BoletoBBResponseDetailsSnake(BoletoBBResponseDetails):
     class Config:
-        alias_generator = camel_to_underscore
+        allow_population_by_field_name = True
+        alias_generator = to_snake_case
+
+
+class AlteracaoData(BaseModel):
+    novaDataVencimento: str
+
+
+class Desconto(BaseModel):
+    tipoPrimeiroDesconto: int
+    valorPrimeiroDesconto: condecimal()
+    percentualPrimeiroDesconto: condecimal()
+    dataPrimeiroDesconto: str
+    tipoSegundoDesconto: int
+    valorSegundoDesconto: condecimal()
+    percentualSegundoDesconto: condecimal()
+    dataSegundoDesconto: str
+    tipoTerceiroDesconto: int
+    valorTerceiroDesconto: condecimal()
+    percentualTerceiroDesconto: condecimal()
+    dataTerceiroDesconto: str
+
+
+class AlteracaoDesconto(BaseModel):
+    tipoPrimeiroDesconto: int
+    novoValorPrimeiroDesconto: condecimal()
+    novoPercentualPrimeiroDesconto: condecimal()
+    novaDataLimitePrimeiroDesconto: str
+    tipoSegundoDesconto: int
+    novoValorSegundoDesconto: condecimal()
+    novoPercentualSegundoDesconto: condecimal()
+    novaDataLimiteSegundoDesconto: str
+    tipoTerceiroDesconto: int
+    novoValorTerceiroDesconto: condecimal()
+    novoPercentualTerceiroDesconto: condecimal()
+    novaDataLimiteTerceiroDesconto: str
+
+
+class AlteracaoDataDesconto(BaseModel):
+    novaDataLimitePrimeiroDesconto: str
+    novaDataLimiteSegundoDesconto: str
+    novaDataLimiteTerceiroDesconto: str
+
+
+class Protesto(BaseModel):
+    quantidadeDiasProtesto: int
+
+
+class Abatimento(BaseModel):
+    valorAbatimento: condecimal()
+
+
+class AlteracaoAbatimento(BaseModel):
+    novoValorAbatimento: condecimal()
+
+
+class Juros(BaseModel):
+    tipoJuros: int
+    valorJuros: condecimal()
+    taxaJuros: condecimal()
+
+
+class Multa(BaseModel):
+    tipoMulta: int
+    valorMulta: condecimal()
+    dataInicioMulta: str
+    taxaMulta: condecimal()
+
+
+class Negativacao(BaseModel):
+    quantidadeDiasNegativacao: int
+    tipoNegativacao: int
+
+
+class AlteracaoSeuNumero(BaseModel):
+    codigoSeuNumero: str
+
+
+class AlteracaoEndereco(BaseModel):
+    enderecoPagador: str
+    bairroPagador: str
+    cidadePagador: str
+    UFPagador: str
+    CEPPagador: int
+
+
+class AlteracaoPrazo(BaseModel):
+    quantidadeDiasAceite: int
+
+
+class BoletoBBAlteracao(BaseModel):
+    numeroConvenio: int
+    indicadorNovaDataVencimento: str = "N"
+    alteracaoData: Optional[AlteracaoData] = None
+    indicadorAtribuirDesconto: str = "N"
+    desconto: Optional[Desconto] = None
+    indicadorAlterarDesconto: str = "N"
+    alteracaoDesconto: Optional[AlteracaoDesconto] = None
+    indicadorAlterarDataDesconto: str = "N"
+    alteracaoDataDesconto: Optional[AlteracaoDataDesconto] = None
+    indicadorProtestar: str = "N"
+    protesto: Optional[Protesto] = None
+    indicadorSustacaoProtesto: str = "N"
+    indicadorCancelarProtesto: str = "N"
+    indicadorIncluirAbatimento: str = "N"
+    abatimento: Optional[Abatimento] = None
+    indicadorAlterarAbatimento: str = "N"
+    alteracaoAbatimento: Optional[AlteracaoAbatimento] = None
+    indicadorCobrarJuros: str = "N"
+    juros: Optional[Juros] = None
+
+
+class BoletoBBBaixar(BaseModel):
+    numeroConvenio: int

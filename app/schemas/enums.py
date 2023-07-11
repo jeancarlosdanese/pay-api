@@ -102,6 +102,17 @@ class StatesUF(str, Enum):
         return list(map(lambda o: o.value, StatesUF))
 
 
+class TipoKeyError(str, Enum):
+    email_not_verified = "email_not_verified"
+    user_not_active = "user_not_active"
+    auth_unsuccessful = "auth_unsuccessful"
+    max_connections_by_user = "max_connections_by_user"
+
+    @classmethod
+    def values(cls):
+        return list(map(lambda o: o.value, TipoKeyError))
+
+
 # class Operator(str, Enum):
 #     eq
 #     isnull

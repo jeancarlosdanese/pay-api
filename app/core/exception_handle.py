@@ -1,14 +1,10 @@
 """For managing validation error for complete application."""
-# from typing import Union
 import logging
 from typing import Union
 from asyncpg.exceptions import ForeignKeyViolationError, InvalidTextRepresentationError, UniqueViolationError
 from fastapi.exceptions import HTTPException, RequestValidationError
 from pydantic.error_wrappers import ValidationError
 
-# from fastapi.exceptions import RequestValidationError
-# from fastapi.openapi.constants import REF_PREFIX
-# from fastapi.openapi.utils import validation_error_response_definition
 
 # from pydantic import ValidationError
 from starlette.requests import Request
@@ -24,6 +20,7 @@ async def http422_error_handler(
     request: Request,
     exc: Union[RequestValidationError, ValidationError],
 ) -> JSONResponse:
+    logger.warn(f"http422_error_handler: {exc}")
     """To handle unprocessable request(HTTP_422) and log accordingly to file.
 
     Args:
@@ -34,6 +31,7 @@ async def http422_error_handler(
     Returns:
         JSONResponse: JSON response with required status code.
     """
+    print(exc)
     try:
         msgs = []
         errors = exc.errors()
@@ -45,76 +43,153 @@ async def http422_error_handler(
 
 
 async def httpException_error_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    logger.warn(f"httpException_error_handler: {exc}")
     # logger.warn(exc.detail)
     # print(f"HTTPException: {exc}")
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "status": "error",
-            "messages": [{"message": f"value_error.missing: {exc.detail}"}],
-            "detail": exc.detail,
+            "erros": [
+                {
+                    "mensagem": exc.detail,
+                    "detail": f"value_error.missing: {exc.detail}",
+                }
+            ]
         },
     )
 
 
+# {
+# 	"erros": [
+# 		{
+# 			"codigo": "4874915",
+# 			"versao": "1",
+# 			"mensagem": "Nosso Número já incluído anteriormente.",
+# 			"ocorrencia": "DCsBWK/o2FSyLoUlNAHc0101"
+# 		}
+# 	]
+# }
+
+
 async def httpException_bb_error_handler(request: Request, exc: HttpExceptionBB) -> JSONResponse:
-    print(f"HttpExceptionBB: {exc.content}")
+    logger.warn(f"httpException_bb_error_handler: {exc.content}")
+
     return JSONResponse(
-        status_code=exc.status_code,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content=exc.content,
     )
 
 
-async def validation_error_exception_handler(request: Request, err: ValidationError):
-    # print(f"ValidationError: {err}")
+async def validation_error_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
+    logger.warn(f"validation_error_exception_handler: {exc}")
+    # print(f"ValidationError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "error": err,
+            "erros": [
+                {
+                    "mensagem": exc.message,
+                    "detalhes": exc.detail,
+                }
+            ]
         },
     )
 
 
-async def asyncpg_unique_validation_exception_handler(request: Request, err: UniqueViolationError):
-    # print(f"UniqueViolationError: {err}")
+async def asyncpg_unique_validation_exception_handler(request: Request, exc: UniqueViolationError) -> JSONResponse:
+    logger.warn(f"asyncpg_unique_validation_exception_handler: {exc}")
+    # print(f"UniqueViolationError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "status": "error",
-            "message": err.message,
-            "detail": err.detail,
+            "erros": [
+                {
+                    "mensagem": exc.message,
+                    "detalhes": exc.detail,
+                }
+            ]
         },
     )
 
 
-async def asyncpg_foreignkey_validation_exception_handler(request: Request, err: ForeignKeyViolationError):
-    # print(f"ForeignKeyViolationError: {err}")
+async def asyncpg_foreignkey_validation_exception_handler(
+    request: Request, exc: ForeignKeyViolationError
+) -> JSONResponse:
+    logger.warn(f"asyncpg_foreignkey_validation_exception_handler: {exc}")
+    # print(f"ForeignKeyViolationError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "status": "error",
-            "message": err.message,
-            "detail": err.detail,
+            "erros": [
+                {
+                    "mensagem": exc.message,
+                    "detalhes": exc.detail,
+                }
+            ]
         },
     )
 
 
-async def asyncpg_invalid_text_representation_error(request: Request, err: InvalidTextRepresentationError):
-    # print(f"InvalidTextRepresentationError: {err}")
+async def asyncpg_invalid_text_representation_error(
+    request: Request, exc: InvalidTextRepresentationError
+) -> JSONResponse:
+    logger.warn(f"asyncpg_invalid_text_representation_error: {exc}")
+    # print(f"InvalidTextRepresentationError: {exc}")
     return JSONResponse(
         status_code=status.HTTP_400_BAD_REQUEST,
         content={
-            "status": "error",
-            "message": err.message,
-            "detail": err.detail,
+            "erros": [
+                {
+                    "mensagem": exc.message,
+                    "detalhes": exc.detail,
+                }
+            ]
         },
     )
 
 
-# validation_error_response_definition["properties"] = {
-#     "errors": {
-#         "title": "Errors",
-#         "type": "array",
-#         "items": {"$ref": "{0}ValidationError".format(REF_PREFIX)},
-#     },
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.warn(f"generic_exception_handler: {exc}")
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "erros": [
+                {
+                    "mensagem": exc.message,
+                    "detalhes": exc.detail,
+                }
+            ]
+        },
+    )
+
+
+# {
+# 	"erros": [
+# 		{
+# 			"codigo": "4874915",
+# 			"versao": "1",
+# 			"mensagem": "Nosso Número já incluído anteriormente.",
+# 			"ocorrencia": "DCsBWK/o2FSyLoUlNAHc0101"
+# 		}
+# 	]
+# }
+
+# {
+# 	"status": "error",
+# 	"message": "duplicate key value violates unique constraint \
+#       "boletos_bb_convenio_bancario_id_and_numero_titulo_benef_a2ea\"",
+# 	"detail": "Key (convenio_bancario_id, numero_titulo_beneficiario)=(b9b2245f-d6d8-4d66-95c7-78b8dedcce69,
+#       12344245) already exists."
+# }
+
+# {
+# 	"erros": [
+# 		{
+# 			"status": "error",
+# 			"message": "duplicate key value violates unique constraint \
+#               "boletos_bb_convenio_bancario_id_and_numero_titulo_benef_a2ea\"",
+# 			"detail": "Key (convenio_bancario_id, numero_titulo_beneficiario)=(b9b2245f-d6d8-4d66-95c7-78b8dedcce69,
+#       12344245) already exists."
+# 		}
+# 	]
 # }

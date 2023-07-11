@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from .api_v1.enums import router as enums_router
+from .api_v1.utils import router as utils_router
 from .api_v1.tenants import router as tenants_router
 from .api_v1.roles import router as roles_router
 from .api_v1.permissions import router as permissions_router
@@ -16,6 +17,7 @@ router = APIRouter()
 
 
 router.include_router(enums_router, prefix="/enums", tags=["enums"])
+router.include_router(utils_router, prefix="/utils", tags=["utils"])
 router.include_router(tenants_router, prefix="/tenants", tags=["tenants"])
 router.include_router(roles_router, prefix="/roles", tags=["roles"])
 router.include_router(permissions_router, prefix="/permissions", tags=["permissions"])

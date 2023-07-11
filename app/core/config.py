@@ -11,6 +11,11 @@ VERSION: str = "1.0.6"
 API_PREFIX_V1: str = "/api/v1"
 WORK_MODE: str = config("WORK_MODE", cast=str, default="prod")
 
+DEV_MODE = True if WORK_MODE == "dev" else False
+
+DEFAULT_LOCALE: str = config("DEFAULT_LOCALE", cast=str, default="pt_BR")
+DEFAULT_TIMEZONE: str = config("DEFAULT_TIMEZONE", cast=str, default="America/Sao_Paulo")
+
 BACKEND_CORS_ORIGINS: str = config("BACKEND_CORS_ORIGINS", default=["http://localhost"])
 
 HOST_MAIN: str = config("HOST_MAIN", cast=str, default="pay")

@@ -3,7 +3,7 @@ from starlette.responses import StreamingResponse
 from datetime import date
 from typing import Any, Optional
 from pydantic import condecimal, conint, constr
-from app.api.dependencies.boletos_bb import get_boleto_bb_by_id_from_path
+from app.api.dependencies.boletos_bb import get_boleto_bb_by_id_from_path, get_boleto_bb_by_seu_numero_from_path
 from app.api.dependencies.database import get_repository
 from fastapi import BackgroundTasks, Body, Depends, HTTPException, status
 from app.api.dependencies.redis_database import get_redis_repository
@@ -12,7 +12,16 @@ from app.db.repositories.convenios_bancarios import ConveniosBancariosRepository
 from app.db.repositories.contas_bancarias import ContasBancariasRepository
 from app.db.repositories.token_bb_redis import TokenBBRedisRepository
 from app.schemas.bancos.boleto import BoletoCreate
-from app.schemas.bancos.boleto_bb import BoletoBBFull, BoletoBBResponseDetails
+from app.schemas.bancos.boleto_bb import (
+    AlteracaoData,
+    BoletoBBAlteracao,
+    BoletoBBBaixar,
+    BoletoBBFull,
+    BoletoBBInDB,
+    BoletoBBNewVencimento,
+    BoletoBBResponseDetails,
+    BoletoBBResponseDetailsSnake,
+)
 from app.schemas.bancos.boleto_pdf import BeneficiarioBoleto, DadosBoletoBB, PagadorBoleto
 from app.schemas.enums import PersonType
 from app.schemas.filter import FilterModel
@@ -222,7 +231,7 @@ async def get_boleto_bb_by_id(
 
 @router.get(
     "/{id}/consulta",
-    response_model=BoletoBBResponseDetails,
+    response_model=BoletoBBResponseDetailsSnake,
     name="boletos-bb:get-boleto-bb-by-id-consulta",
 )
 async def get_boleto_bb_by_id_consulta(
@@ -234,7 +243,27 @@ async def get_boleto_bb_by_id_consulta(
     boleto_bb_response = await boletos_bb_repo.consultar_situacao_boleto_bb(
         id=boleto_bb_full.id, token_bb_redis_repo=token_bb_redis_repo
     )
-    return boleto_bb_response
+
+    boleto_response = BoletoBBResponseDetailsSnake(**boleto_bb_response)
+
+    return boleto_response
+
+
+@router.get(
+    "/{seu_numero}/seu-numero",
+    response_model=BoletoBBResponseDetailsSnake,
+    name="boletos-bb:get-boleto-bb-consulta-by-seu-numero",
+)
+async def get_boleto_bb_consulta_by_seu_numero(
+    boleto_bb: BoletoBBFull = Depends(get_boleto_bb_by_seu_numero_from_path),
+    token_bb_redis_repo: TokenBBRedisRepository = Depends(get_redis_repository(TokenBBRedisRepository)),
+    boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
+) -> BoletoBBResponseDetails:
+    boleto_bb_full = BoletoBBFull(**boleto_bb)
+    boleto_bb_response = await boletos_bb_repo.consultar_situacao_boleto_bb(
+        id=boleto_bb_full.id, token_bb_redis_repo=token_bb_redis_repo
+    )
+    return BoletoBBResponseDetailsSnake(**boleto_bb_response)
 
 
 @router.get("/{id}/boleto-bb-pdf")
@@ -287,6 +316,71 @@ async def download_pdf_order(
     file_boleto_bb_pdf = create_boleto_bb_pdf(boleto=boleto, cpf_cnpj_senha=cpf_cnpj_senha)
 
     return StreamingResponse(file_boleto_bb_pdf, media_type="application/pdf", background=background_tasks)
+
+
+@router.patch(
+    "/{id}",
+    response_model=Any,
+    name="boletos-bb:update-vencimento-boleto-bb-by-id",
+)
+async def update_vencimento_boleto_bb_by_id(
+    boleto_bb: BoletoBBInDB = Depends(get_boleto_bb_by_id_from_path),
+    new_vencimento: BoletoBBNewVencimento = Body(..., embed=False),
+    convenios_bancarios_repo: ConveniosBancariosRepository = Depends(get_repository(ConveniosBancariosRepository)),
+    boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
+    token_bb_redis_repo: TokenBBRedisRepository = Depends(get_redis_repository(TokenBBRedisRepository)),
+) -> Any:
+    boleto_bb = BoletoBBInDB(**boleto_bb)
+    convenio_bancario = await convenios_bancarios_repo.get_convenio_bancario_by_id(
+        tenant_id=boleto_bb.tenant_id, id=boleto_bb.convenio_bancario_id
+    )
+
+    boleto_bb_alteracao = BoletoBBAlteracao(
+        numeroConvenio=convenio_bancario.numero_convenio,
+        indicadorNovaDataVencimento="S",
+        alteracaoData=AlteracaoData(
+            novaDataVencimento=new_vencimento.data_vencimento_format,
+        ),
+    )
+
+    boleto_bb = await boletos_bb_repo.update_vencimento_boleto_bb(
+        id=boleto_bb.id,
+        new_vencimento=new_vencimento,
+        boleto_bb_alteracao=boleto_bb_alteracao,
+        token_bb_redis_repo=token_bb_redis_repo,
+    )
+
+    print(boleto_bb_alteracao.dict(exclude_unset=True))
+
+    return boleto_bb
+
+
+@router.post(
+    "/{id}/baixar",
+    response_model=Any,
+    name="boletos-bb:baixar-boleto-bb-by-id",
+)
+async def baixar_boleto_bb_by_id(
+    boleto_bb: BoletoBBInDB = Depends(get_boleto_bb_by_id_from_path),
+    convenios_bancarios_repo: ConveniosBancariosRepository = Depends(get_repository(ConveniosBancariosRepository)),
+    boletos_bb_repo: BoletosBBRepository = Depends(get_repository(BoletosBBRepository)),
+    token_bb_redis_repo: TokenBBRedisRepository = Depends(get_redis_repository(TokenBBRedisRepository)),
+) -> Any:
+    print("OOOOppppaaaaa!!!")
+    boleto_bb = BoletoBBInDB(**boleto_bb)
+    convenio_bancario = await convenios_bancarios_repo.get_convenio_bancario_by_id(
+        tenant_id=boleto_bb.tenant_id, id=boleto_bb.convenio_bancario_id
+    )
+
+    boleto_bb_baixar = BoletoBBBaixar(numeroConvenio=convenio_bancario.numero_convenio)
+
+    boleto_bb = await boletos_bb_repo.baixar_boleto_bb(
+        id=boleto_bb.id,
+        boleto_bb_baixar=boleto_bb_baixar,
+        token_bb_redis_repo=token_bb_redis_repo,
+    )
+
+    return boleto_bb
 
 
 # @router.get("/{id}/pdf-order-base-64")

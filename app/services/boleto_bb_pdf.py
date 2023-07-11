@@ -2,6 +2,7 @@ import locale
 import io
 import re
 import qrcode
+
 from reportlab.pdfgen import canvas
 
 from reportlab.lib.enums import TA_RIGHT, TA_LEFT, TA_CENTER
@@ -72,7 +73,6 @@ def create_boleto_bb_pdf(boleto: DadosBoletoBB, cpf_cnpj_senha: bool = False):
 
 # START create_teste_pdf
 def __gen_boleto_bb_page(pdf: canvas.Canvas, size, boleto: DadosBoletoBB, bookmark=False):
-
     # for font in pdf.getAvailableFonts():
     #     print(font)
 
@@ -86,6 +86,8 @@ def __gen_boleto_bb_page(pdf: canvas.Canvas, size, boleto: DadosBoletoBB, bookma
         height * 0.414,  # footer (41,1%)
         height * 0.100,  # footer (10,40%)
     ]
+
+    print(boleto.qr_code)
 
     mainTable = Table(
         [
@@ -127,7 +129,6 @@ def __gen_boleto_bb_page(pdf: canvas.Canvas, size, boleto: DadosBoletoBB, bookma
 
 
 def __gen_pix_table(width, height, data_qr_code: str):
-
     width -= LEFT_MARGIN + RIGTH_MARGIN
     height -= TOP_MARGIN
 
@@ -191,7 +192,6 @@ def __gen_pix_table(width, height, data_qr_code: str):
 
 
 def __gen_recibo_pagador_table(width, height, boleto: DadosBoletoBB):
-
     # START: Recibo do pagado
     width -= LEFT_MARGIN + RIGTH_MARGIN
 
@@ -371,7 +371,6 @@ def __gen_recibo_pagador_table(width, height, boleto: DadosBoletoBB):
 
 
 def __gen_boleto_bb(width, height, boleto: DadosBoletoBB):
-
     # config extra styles
     infoStyle = ParagraphStyle("dataStyle")
     infoStyle.fontName = "Times-Roman"

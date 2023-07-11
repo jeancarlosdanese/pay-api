@@ -131,6 +131,7 @@ dmypy.json
 # Config for container docker on vscode
 .devcontainer/
 
+.DS_Store
 static/*.*
 !static/README.txt
 downloads/*.*

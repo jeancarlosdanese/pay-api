@@ -8,6 +8,15 @@ camel_pat = re.compile(r"([A-Z])")
 under_pat = re.compile(r"_([a-z])")
 
 
+def to_camel_case(snake_str: str) -> str:
+    components = snake_str.split("_")
+    return components[0] + "".join(x.title() for x in components[1:])
+
+
+def to_snake_case(string: str) -> str:
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
+
+
 def camel_to_underscore(name):
     res = camel_pat.sub(lambda x: "_" + x.group(1).lower(), name)
     # print(f"{name}: --> {res}")

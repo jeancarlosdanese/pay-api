@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi.param_functions import Depends
+from app.api.dependencies.auth import get_auth_token
 from app.api.dependencies.security import tenant_authentication_header
 from app.schemas.enums import (
     AddressType,
@@ -9,6 +10,7 @@ from app.schemas.enums import (
     PersonType,
     PhoneType,
     StatesUF,
+    TipoKeyError,
     UnitType,
 )
 from fastapi.routing import APIRouter
@@ -92,3 +94,13 @@ async def get_enums_of_address_types() -> List[AddressType]:
 async def get_enums_of_state_ufs() -> List[StatesUF]:
     ufs = [p.value for p in StatesUF]
     return ufs
+
+
+@router.get(
+    "/key-errors",
+    response_model=List[TipoKeyError],
+    name="enums:get-key-errors",
+    dependencies=[Depends(get_auth_token)],
+)
+async def get_enums_of_key_errors() -> List[TipoKeyError]:
+    return TipoKeyError.values()
